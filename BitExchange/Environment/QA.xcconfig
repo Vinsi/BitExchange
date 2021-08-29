@@ -1,0 +1,10 @@
+//
+//  QA.xcconfig
+//  BitExchange
+//
+//  Created by Vinsi on 01/08/2021.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+BITFINEX_BASE_PUB_URL = api-pub.bitfinex.com
