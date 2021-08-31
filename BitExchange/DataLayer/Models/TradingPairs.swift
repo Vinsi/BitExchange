@@ -134,9 +134,9 @@ struct TickerChannelModel: Identifiable {
 //         LOW
        
         if value.count == 10 {
-            pair = TradingPair(trading:  Trading(value: [] + value))
+            pair = TradingPair(trading:  Trading(value: [""] + value))
         } else if value.count > 10 {
-            pair = TradingPair(funding:  Funding(value: [] + value))
+            pair = TradingPair(funding:  Funding(value: [""] + value))
         } else {
             pair = TradingPair()
         }

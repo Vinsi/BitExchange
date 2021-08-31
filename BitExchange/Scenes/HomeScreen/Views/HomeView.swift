@@ -26,8 +26,8 @@ struct HomeView: View {
                     ScrollView {
                         LazyVGrid(columns: gridItemLayout, alignment: .center, spacing: 10) {
                             ForEach(items) { item in
-                                NavigationLink(destination: DetailView()) {
-                                    BlockView(tradingPair: item.getValue())
+                                NavigationLink(destination: DetailView(items: viewModel.tradingPairs, selectedItem: item)) {
+                                    BlockView(tradingPair: item.getValue()).frame(width: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, height: /*@START_MENU_TOKEN@*/100/*@END_MENU_TOKEN@*/, alignment: .leading)
                                 }
                             }
                         }
@@ -35,7 +35,8 @@ struct HomeView: View {
                     }
                     
                     // .navigationTitle("Bit exchange")
-                }                .navigationViewStyle(StackNavigationViewStyle())
+                }.navigationTitle("Bit ExChange").font(.title)
+                 .navigationBarTitleDisplayMode(.inline)
             }
         }.onAppear {
             viewModel.getTradingPairsList()

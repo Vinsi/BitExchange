@@ -23,5 +23,15 @@ struct BFXSocketRepository: RepositoryType {
     func getAll() -> AnyPublisher<[Any], RepoError> {
         bfxSocketService.start(with: BFXSocketBuilder(parameter: .init(event: .subscribe, channel: .ticker, symbol: "tBTCUSD"))).mapError({RepoError.serverError(ApiError:$0)}).eraseToAnyPublisher()
     }
+    
+    func start(symbol: String, onRecieveData:@escaping([Any], RepoError?) ->()) {
+        bfxSocketService.start(with: BFXSocketBuilder(parameter: .init(event: .subscribe, channel: .ticker, symbol: symbol))) { (data, error) in
+            guard let error = error else {
+                onRecieveData(data, nil)
+                return
+            }
+            onRecieveData(data,RepoError.serverError(ApiError: error))
+        }
+    }
 }
 

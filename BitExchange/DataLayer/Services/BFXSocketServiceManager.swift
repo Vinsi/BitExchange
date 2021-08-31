@@ -18,7 +18,7 @@ final class BFXSocketServiceManager {
         return shared
     }
     
-    private(set)var socket: WebSocket!
+    private(set)var socket: WebSocket?
     
     func start<T:SocketBuildable>(with builder: T) -> AnyPublisher<[Any], APIError>   {
         command = builder.parameter.toJsonString
@@ -27,10 +27,10 @@ final class BFXSocketServiceManager {
             guard let self = self else {
                 return
             }
-            self.socket.onEvent = { event in
+            self.socket?.onEvent = { event in
                 switch event {
                 case .connected(_):
-                    self.socket.write(string: self.command)
+                    self.socket?.write(string: self.command)
                 case .error(.some(let err)):
                     print("socket disconnected\(err.localizedDescription)")
                     promise(.failure(.disconnected))
@@ -51,8 +51,52 @@ final class BFXSocketServiceManager {
             }
         }
         defer {
-            socket.connect()
+            socket?.connect()
         }
         return future.eraseToAnyPublisher()
+    }
+    
+    func start<T:SocketBuildable>(with builder: T, callBack: (([Any], APIError?)->())?) {
+        command = builder.parameter.toJsonString
+        socket = WebSocket(request: builder.urlRequest())
+            self.socket?.onEvent = { [weak self] event in
+                guard let self = self else { return }
+                switch event {
+                case .connected(_):
+                    print("socket Connected")
+                    print("command:\(self.command)")
+                    self.socket?.write(string: self.command)
+                case .error(.some(let err)):
+                    print("socket disconnected\(err.localizedDescription)")
+                    callBack?([],.disconnected)
+                case .text(let word):
+                    print("socket got string")
+                    print( word.data(using: .utf16))
+                    guard let data = word.data(using: .utf16) ,
+                          let jsonData = try? JSONSerialization.jsonObject(with: data) else {
+                        return
+                    }
+                    
+                    DispatchQueue.main.async {
+                        guard let data = self.extract(jsonData) else {
+                            return
+                        }
+                        callBack?(data, nil)
+                    }
+                   
+                default:
+                    break
+                }
+            }
+        socket?.connect()
+    }
+    
+    private func extract( _ jsonData: Any) -> [Any]? {
+        if let array = jsonData as? [Any],
+           array.count >= 2,
+           let streamData = array[1] as? [Any] {
+            return streamData
+        }
+        return nil
     }
 }

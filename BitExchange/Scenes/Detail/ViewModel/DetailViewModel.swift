@@ -8,35 +8,62 @@
 import Foundation
 import Combine
 
-final class DetailViewModel: ObservableObject, HomeViewModelType {
+final class DetailViewModel: ObservableObject {
     
     private let bfxRepository: BFXSocketRepository
     private(set) var tradingPairs = [TickerChannelModel]()
     private var cancellables = Set<AnyCancellable>()
-    
+    var items: [TradingPair] = []
+    var selectedItem: TradingPair?
     @Published private(set) var state: ResultState<[TickerChannelModel]> = .loading
     
     init(bfxRepo: BFXSocketRepository) {
         self.bfxRepository = bfxRepo
     }
     
+    func moveNext() -> Bool {
+        
+        if let index = items.firstIndex(where: { $0.id == self.selectedItem!.id  }),
+           index < (items.count - 1)  {
+            let i = index + 1
+            self.selectedItem = items[i]
+            return true
+        }
+        return false
+    }
+    
+    func movePrevious() -> Bool {
+        
+        if let index = items.firstIndex(where: { $0.id == self.selectedItem!.id  }),
+           index > 0 {
+            let i = index - 1
+            self.selectedItem = items[i]
+            return true
+        }
+        return false
+    }
+    
+    func clean() {
+        bfxRepository.bfxSocketService.socket?.disconnect()
+    }
+    
     func getTradingPairsList() {
         self.state = .loading
         self.tradingPairs.removeAll()
-        let cancellable = bfxRepository.getAll()
-            .sink { (res) in
-                switch res {
-                case .finished:
-                    self.state = .success(content: self.tradingPairs)
-                case .failure(let error):
-                    self.state = .failed(error: error)
-                }
-            } receiveValue: { trading in
-                if trading.count == 10 {
-                 self.tradingPairs += [TickerChannelModel(value: trading)]
-                }
+        bfxRepository.bfxSocketService.socket?.disconnect()
+        bfxRepository.start(symbol: selectedItem?.getValue()?.SYMBOL ?? "tBTCUSD", onRecieveData: { [weak self](res, error) in
+            guard let self = self else {
+                return
             }
-        self.cancellables.insert(cancellable)
+            guard let error = error else {
+                if res.count == 10 {
+                 self.tradingPairs += [TickerChannelModel(value: res)]
+                 self.state = .success(content: self.tradingPairs)
+                }
+                return
+            }
+            self.state = .failed(error: error)
+            })
     }
 }
 

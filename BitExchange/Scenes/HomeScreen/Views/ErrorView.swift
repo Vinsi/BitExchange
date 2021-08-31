@@ -63,3 +63,28 @@ struct BlockView: View {
         }
     }
 }
+
+
+struct BlockItemView: View {
+    
+    struct Data {
+        var title: String
+        var value: String
+        var valueColor: Color
+    }
+    let data: Data?
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4, content: {
+                Text(data?.title ?? "")
+                    .foregroundColor(.black)
+                    .font(.system(size: 14, weight: .semibold))
+                Text(data?.value ?? "")
+                    .foregroundColor(data!.valueColor)
+                    .font(.footnote)
+                
+            })
+        }
+    }
+}
